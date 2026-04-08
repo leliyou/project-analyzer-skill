@@ -233,6 +233,9 @@ For detailed code logic diagrams:
 - when a method makes important internal calls, list the main called functions or helper methods under it instead of stopping at the top-level method name
 - do not decide branching only from route names or top-level method names; branch according to the real call graph and data dependencies visible in code
 - if a function calls other functions to fetch results, compute intermediate values, or decide the next step, show those calls as child branches or downstream boxes when they materially affect the flow
+- prefer detailed inline notes over minimal labels; explain what the function reads, writes, returns, decides, or triggers when the code makes that visible
+- in program architecture, code logic, and call-graph outputs, annotate important nodes with concrete meanings such as input source, output payload, decision condition, side effect, queue handoff, or external dependency usage
+- when a module or function is shown because it sits on the critical path, the note should explain why it matters in that path, not only restate its name
 
 #### `code-call-graph.md`
 
@@ -263,6 +266,7 @@ For call graph output:
 - add short inline notes for important caller, callee, helper, and dependency lines when the role is clear from static inspection
 - when possible, annotate each important line in the call graph rather than only the top-level nodes
 - if a branch comes from a helper return value or downstream dependency, show that branch explicitly instead of compressing it into one summary line
+- prefer notes that explain data returned, conditions checked, downstream side effects, or why the edge exists
 - be explicit about where static inspection ends and inference begins
 
 #### `mock-data-stages.md`
@@ -304,6 +308,11 @@ Preferred mock-document style:
 - include short field-structure notes when a payload shape is easier to understand in text than in JSON alone
 - when the code adds execution context, show the "before" and "after" payloads as separate stages
 - when runtime configuration fills parts of the data, say that explicitly and label the downstream examples as inferred or illustrative
+- detect the main top-level operation types, request modes, or dispatch branches from code before writing the mock document
+- if the project clearly supports multiple primary types, do not document only one rich branch and omit the others
+- when there are two to four major types, include each one in the mock document with at least its request shape, branch point, and stage-specific payload differences
+- if one type gets the full end-to-end expansion and another shares most stages, still add a compact section for the secondary type that shows where it diverges
+- if there are too many variants to fully expand, document the major ones and explicitly list the remaining variants with short notes about why they were summarized
 
 ### 5. Favor Concrete Outputs Over Generic Commentary
 

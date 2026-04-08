@@ -118,6 +118,7 @@ Diagram guidance:
 - If a helper call returns data that determines later behavior, show that helper as a branch or downstream node when it materially affects understanding
 - Keep monospace box borders visually aligned; avoid diagrams whose right edges drift line by line
 - Prefer continuity with existing house style over inventing a brand-new diagram layout
+- Prefer detailed annotations on important files, methods, and edges; notes should explain inputs, outputs, decisions, side effects, or dependency usage when code makes them visible
 
 Style inheritance order:
 
@@ -185,6 +186,7 @@ Call graph guidance:
 - Add short inline notes for important lines when static inspection makes the role clear
 - Prefer annotating each important line in the call graph, not only the first line of each chain
 - If helper-returned data determines later branching, show that helper and the resulting branch explicitly
+- Prefer notes that explain what data is returned, what condition is checked, what side effect is triggered, or why the caller depends on that callee
 - If static analysis cannot prove a call edge, label it as inferred
 
 ## `mock-data-stages.md`
@@ -225,6 +227,10 @@ Mock guidance:
 - For each meaningful stage, include code owner, what changed, and why that output shape exists
 - Add field-structure notes when the payload shape mixes variants, nested keys, or runtime-enriched fields
 - When runtime configuration, external services, or scheduler data fill part of the payload, label the resulting mock as inferred or illustrative
+- Detect primary request types, task modes, or dispatch branches from code before selecting stages
+- If multiple top-level types are clearly supported, cover each major type instead of documenting only the richest branch
+- When one type shares most stages with another, include a compact divergence section that shows where the payload or processing path changes
+- If only one type is expanded end-to-end, explicitly explain why the other major types were summarized and still provide their key request and branch shapes
 
 ## Regeneration Behavior
 

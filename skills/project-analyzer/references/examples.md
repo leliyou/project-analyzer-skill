@@ -40,14 +40,14 @@ User
   │       ▼
   │     api/app.py                    （Flask /submit, /status）
   │       │
-  │       ├── before_request()        ← 生成 request_id / 记录请求日志
-  │       ├── authenticate()          ← 调用 api/utils.py 做鉴权
-  │       ├── POST /submit            ← 接收任务提交请求
-  │       └── GET  /status/<taskid>   ← 查询任务执行状态
+  │       ├── before_request()        ← 生成 request_id / 注入日志上下文 / 追踪本次请求
+  │       ├── authenticate()          ← 调用 api/utils.py 做鉴权 / 决定是否允许进入主流程
+  │       ├── POST /submit            ← 接收任务提交请求 / 读取原始 body / 分流到任务入口
+  │       └── GET  /status/<taskid>   ← 查询任务执行状态 / 读取 Celery backend 结果
   │
   │     api/utils.py                  ← 响应封装 / 鉴权 / 参数读取
-  │       ├── require_auth()          ← 校验调用方身份
-  │       └── response()              ← 统一输出 JSON 响应
+  │       ├── require_auth()          ← 校验调用方身份 / 失败时直接中断请求
+  │       └── response()              ← 统一输出 JSON 响应 / 约束 status-msg-data 结构
   │
   ├──── Worker ───────────────────────────────────────────────
   │       │
@@ -60,10 +60,10 @@ User
           │
           ▼
         service/processor.py          ← 业务主流程协调层
-          ├── normalize_payload()     ← 归一化输入结构
-          ├── run_pipeline()          ← 执行业务主流程
-          ├── write_result()          ← 写回存储层
-          └── notify_downstream()     ← 触发下游处理
+          ├── normalize_payload()     ← 归一化输入结构 / 补齐默认值 / 准备后续计算上下文
+          ├── run_pipeline()          ← 执行业务主流程 / 串起查询-计算-落库主链路
+          ├── write_result()          ← 写回存储层 / 返回持久化结果
+          └── notify_downstream()     ← 触发下游处理 / 推送结果或刷新依赖系统
 
 外部依赖
   ├── Redis                          ← 队列 / 锁 / 状态存储
@@ -101,13 +101,13 @@ User
                      │       Flask 路由与入口层      │
                      ├────────────────────────────┤
                      │ api/app.py:12 before_request() │
-                     │   └── 生成 request_id / 记录日志 │
+                     │   └── 生成 request_id / 记录日志 / 准备 trace 上下文 │
                      │ api/app.py:20 authenticate()   │
-                     │   └── 调 api/utils.require_auth() │
+                     │   └── 调 api/utils.require_auth() / 决定是否继续分派 │
                      │ api/app.py:34 submit()         │
-                     │   └── 进入任务提交流程           │
+                     │   └── 读取 body / 校验参数 / 进入任务提交流程         │
                      │ api/app.py:52 fetch(taskid)    │
-                     │   └── 进入任务状态查询流程       │
+                     │   └── 读取 taskid / 查询 backend / 进入状态查询流程   │
                      └──────────────┬─────────────┘
                                     │
                     公共前置处理完成：日志 / 鉴权 / 路由分派
@@ -128,9 +128,9 @@ User
    │ api/data_process.py:18      │         │ api/app.py:52 fetch()      │
    │ DataProcessor.submit()      │         │ 1. AsyncResult(taskid)     │
    │ 1. _normalize_payload()     │         │ 2. 读取 task.state         │
-   │ 2. _select_worker()         │         │ 3. 提取 task.info          │
+   │ 2. _select_worker()         │         │ 3. 提取 task.info / result │
    │ 3. submit_job.delay()       │         │ 4. api/utils.response()    │
-   │ 4. 返回 task_id             │         └──────────────┬─────────────┘
+   │ 4. 返回 task_id / queue 信息 │         └──────────────┬─────────────┘
    └──────────────┬─────────────┘                        │
                   │                                      │
                   ▼                                      ▼
@@ -203,12 +203,12 @@ External entrypoints                     ← Collect all upstream triggers
               │     └── service/processor.py :: run_pipeline()   ← Execute the main business pipeline
               │
               └── service/processor.py             ← Core execution module
-                    ├── normalize_payload()        ← Normalize inbound data shape
-                    ├── _build_query()             ← Build query or lookup conditions
-                    ├── _fetch_origin()            ← Read source data
-                    ├── _transform_result()        ← Compute the business result
-                    ├── write_result()             ← Persist final output
-                    └── notify_downstream()        ← Trigger dependent systems
+                    ├── normalize_payload()        ← Normalize inbound data shape before branching
+                    ├── _build_query()             ← Build query or lookup conditions for source reads
+                    ├── _fetch_origin()            ← Read source data used by later transformation
+                    ├── _transform_result()        ← Compute the business result returned downstream
+                    ├── write_result()             ← Persist final output and capture write status
+                    └── notify_downstream()        ← Trigger dependent systems with computed result
 ```
 
 ## Call Chain 1: API Submission Flow
@@ -270,6 +270,15 @@ This example uses demo values shaped from code structure rather than production 
 ## Flow Chosen
 
 `POST /submit` -> request normalization -> worker dispatch -> processor execution
+
+## Supported Operation Types
+
+- `STANDARD_SUBMIT`: the default path that creates or updates a task with the incoming payload
+- `REWRITE_FIELDS`: an alternate path that keeps the same entrypoint but rewrites part of the payload before execution
+
+## Shared Stages
+
+Stages 1 to 3 are shared by both operation types. The divergence begins when the processor decides which transformation strategy to execute.
 
 ## Stage 1: API Request Payload
 
@@ -466,6 +475,54 @@ execution_payload = {
 
 - This is a good place to show fields added by helper functions such as normalization, filter-building, or runtime config loading.
 - If the code preserves both original and normalized forms, show both rather than collapsing them into one object.
+
+## Type Divergence: `REWRITE_FIELDS`
+
+### Branch point
+
+`service/processor.py:42 run_pipeline()` chooses a rewrite helper instead of the default execution helper when the mode indicates field remapping.
+
+### Divergent payload shape
+
+```text
+rewrite_payload = {
+  "user_id": str,
+  "items": list[dict],
+  "normalized_items": list[dict],
+  "field_mapping": dict[str, str],
+  "rewrite_preview": list[dict],
+  "request_id": str
+}
+```
+
+### Mock data
+
+```json
+{
+  "user_id": "u_123",
+  "items": [
+    {"sku": "sku-1", "qty": 2},
+    {"sku": "sku-2", "qty": 1}
+  ],
+  "normalized_items": [
+    {"sku": "sku-1", "qty": 2, "unit_price": 15.5},
+    {"sku": "sku-2", "qty": 1, "unit_price": 28.0}
+  ],
+  "field_mapping": {
+    "unit_price": "display_price"
+  },
+  "rewrite_preview": [
+    {"sku": "sku-1", "display_price": 15.5},
+    {"sku": "sku-2", "display_price": 28.0}
+  ],
+  "request_id": "a9b2d1a8-6df7-4d33-a3cc-4f9d2b6a0e51"
+}
+```
+
+### Notes
+
+- This compact divergence section shows the second primary type without repeating every shared stage.
+- When a repository supports two or more main modes, generated docs should give each major mode at least this level of coverage.
 
 ## Stage 5: Final Result Or Write Payload
 

@@ -31,6 +31,8 @@ Not every project has all of these. Identify the ones that exist.
 - External integration layer
 - Caller/callee relationships for at least one important flow
 - Helper functions that materially affect later control flow
+- Top-level request types, modes, or dispatch branches identified
+- Major branch differences traced where multiple primary types exist
 
 ## Infrastructure
 
@@ -45,8 +47,11 @@ Not every project has all of these. Identify the ones that exist.
 - At least one main flow traced end-to-end
 - Architecture diagram uses real project names
 - Logic diagram uses real functions/files when available
+- Diagram annotations explain why important nodes matter, not only what they are called
 - Call graph identifies real caller -> callee edges for at least one important chain
+- Call graph annotations explain data flow, decisions, or side effects where statically visible
 - Mock data stages match the actual code structure
+- Mock coverage includes all major supported types or explicitly explains why some were summarized
 - Uncertainties clearly marked
 - If existing docs exist, new output visibly matches their diagram style and terminology
 - Old docs were used as style input, not blindly copied as factual truth
