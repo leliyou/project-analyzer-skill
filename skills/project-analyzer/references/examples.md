@@ -183,75 +183,95 @@ User
 ## Overview Call Graph
 
 ```text
-External entrypoints                     ← Collect all upstream triggers
+External entrypoints                          ← Collect all upstream triggers
   │
-  ├── HTTP POST /submit                  ← Create a new async job
-  ├── HTTP GET  /submit/<taskid>         ← Read task state or result
-  └── Worker / Scheduler                 ← Background or timed trigger
-        │
-        ▼
-      api/app.py                         ← Web entry and route dispatch layer
-        ├── before_request()             ← Initialize request context
-        ├── authenticate()               ← Enforce caller authentication
-        ├── submit()                     ← Enter submission flow
-        └── fetch(taskid)                ← Enter result lookup flow
-              │
-              ├── api/data_process.py :: DataProcessor.submit()
-              │     └── worker.submit_job.delay()   ← Enqueue async worker task
-              │
-              ├── worker/__init__.py :: submit_job()
-              │     └── service/processor.py :: run_pipeline()   ← Execute the main business pipeline
-              │
-              └── service/processor.py             ← Core execution module
-                    ├── normalize_payload()        ← Normalize inbound data shape before branching
-                    ├── _build_query()             ← Build query or lookup conditions for source reads
-                    ├── _fetch_origin()            ← Read source data used by later transformation
-                    ├── _transform_result()        ← Compute the business result returned downstream
-                    ├── write_result()             ← Persist final output and capture write status
-                    └── notify_downstream()        ← Trigger dependent systems with computed result
+  ├── HTTP POST /submit                       ← Start async task submission
+  │   └── api/app.py:34 submit()              ← Parse request and enter submission path
+  │       └── api/data_process.py:18 DataProcessor.submit()
+  │           └── worker.submit_job.delay()   ← Hand off normalized payload to async worker
+  │
+  ├── HTTP GET /submit/<taskid>               ← Read task state or final result
+  │   └── api/app.py:52 fetch(taskid)         ← Query result backend with task id
+  │       └── AsyncResult(taskid)             ← Return state/result used by API response
+  │
+  └── Worker / Scheduler                      ← Background execution or timed trigger
+      └── worker/__init__.py:15 submit_job()  ← Execute queued payload in worker context
+          └── service/processor.py:42 run_pipeline()
+              ├── normalize_payload()         ← Prepare stable internal data before branching
+              ├── _build_query()              ← Build source lookup parameters
+              ├── _fetch_origin()             ← Load source data used by later computation
+              ├── _transform_result()         ← Produce business result consumed downstream
+              ├── write_result()              ← Persist output and capture write status
+              └── notify_downstream()         ← Trigger dependent systems with final result
 ```
 
 ## Call Chain 1: API Submission Flow
 
 ```text
-Caller                                  ← External system or end user
+Caller                                       ← External system or end user
   │
   ▼
-api/app.py:34 submit()                  ← Main HTTP submission entry
-  ├── request.get_data()                ← Read raw request payload
-  ├── _validate_payload()               ← Validate required business fields
+api/app.py:12 before_request()               ← Create request context used by logging and tracing
+  │
+  ▼
+api/app.py:20 authenticate()                 ← Decide whether the caller may enter business flow
+  │
+  ├── auth failed
+  │   └── api/utils.py:30 response()         ← Return error response and stop further calls
+  │
+  └── auth passed
+      ▼
+api/app.py:34 submit()                       ← Main HTTP submission entry
+  ├── request.get_data()                     ← Read raw request payload from HTTP body
+  ├── _validate_payload()                    ← Check required fields before dispatch
   ├── api/data_process.py:18 DataProcessor.submit()
-  │     ├── _normalize_payload()        ← Convert request data into a stable internal shape
-  │     ├── _select_worker()            ← Choose the target worker or queue
-  │     └── worker.submit_job.delay()   ← Dispatch async execution
-  └── api/utils.py:30 response()        ← Return `task_id` to the caller
+  │   ├── _normalize_payload()               ← Convert request data into a stable internal shape
+  │   ├── _select_worker()                   ← Choose queue/worker based on request mode
+  │   ├── worker.submit_job.delay()          ← Enqueue async execution and return task handle
+  │   └── task.id                            ← Result handoff consumed by API layer
+  └── api/utils.py:30 response()             ← Return `task_id` so caller can poll later
 ```
 
-## Call Chain 2: Worker Execution Flow
+## Call Chain 2: Status Lookup Flow
+
+```text
+Caller                                       ← Polling client or UI
+  │
+  ▼
+api/app.py:52 fetch(taskid)                  ← Enter result lookup path with known task id
+  ├── AsyncResult(taskid)                    ← Read state/result from the backend store
+  ├── task.state                             ← Branch on current execution state
+  ├── task.info / task.result                ← Extract backend payload used in response
+  ├── if state in {"PENDING", "STARTED"}     ← Return progress-style response
+  ├── if state == "SUCCESS"                  ← Return final result payload
+  └── api/utils.py:30 response()             ← Normalize backend state into API JSON shape
+```
+
+## Call Chain 3: Worker Execution Flow
 
 ```text
 worker/__init__.py:15 submit_job(payload)      ← Celery or worker task entry
   ├── service/processor.py:18 normalize_payload()
-  │     ├── _extract_fields()                  ← Pull out fields needed by later steps
-  │     ├── _normalize_shape()                 ← Standardize the payload structure
-  │     └── _fill_defaults()                   ← Fill optional values before execution
-  ├── service/processor.py:42 run_pipeline()   ← Execute the main business path
-  │     ├── _build_query()                     ← Construct a source lookup request
-  │     ├── _fetch_origin()                    ← Load source records
-  │     ├── _transform_result()                ← Produce computed output
-  │     ├── write_result()                     ← Save the computed result
-  │     └── notify_downstream()                ← Notify dependent services
-  └── return result                            ← Return the task result to the backend
+  │   ├── _extract_fields()                    ← Pull out fields needed by later steps
+  │   ├── _normalize_shape()                   ← Standardize the payload structure
+  │   └── _fill_defaults()                     ← Fill optional values before execution
+  ├── service/processor.py:42 run_pipeline()   ← Main worker orchestration point
+  │   ├── _build_query()                       ← Construct source lookup request
+  │   ├── _fetch_origin()                      ← Return source records consumed by transform step
+  │   ├── _transform_result()                  ← Produce computed output and branch-specific result
+  │   ├── write_result()                       ← Save computed output for storage/result reading
+  │   └── notify_downstream()                  ← Trigger dependent service using final output
+  └── return result                            ← Store task result for later `fetch(taskid)` calls
 ```
 
 ## Runtime Dependency Chain
 
 ```text
-service/processor.py:42 run_pipeline()         ← Main execution chain
-  ├── lib/conf_manager.py :: ConfManager.get_config() ← Read runtime configuration
-  ├── lib/utils.py :: http_post()              ← Call an external HTTP dependency
-  ├── DatabaseClient.execute()                 ← Persist data into storage
-  └── CacheClient.set()                        ← Refresh cache or secondary state
+service/processor.py:42 run_pipeline()                ← Main execution chain
+  ├── lib/conf_manager.py :: ConfManager.get_config() ← Read runtime configuration used by later calls
+  ├── lib/utils.py :: http_post()                     ← Call an external HTTP dependency when downstream sync is required
+  ├── DatabaseClient.execute()                        ← Persist data into storage for durable result tracking
+  └── CacheClient.set()                               ← Refresh cache or derived state after write completes
 ```
 
 ## Notes On Inference

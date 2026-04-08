@@ -50,6 +50,7 @@ Not every project has all of these. Identify the ones that exist.
 - Diagram annotations explain why important nodes matter, not only what they are called
 - Call graph identifies real caller -> callee edges for at least one important chain
 - Call graph annotations explain data flow, decisions, or side effects where statically visible
+- Call graph sections are readable as flows, with explicit branch points and result handoffs for the main paths
 - Mock data stages match the actual code structure
 - Mock coverage includes all major supported types or explicitly explains why some were summarized
 - When only a small number of major types exist, each one is expanded as its own stage chain instead of being reduced to a short difference note

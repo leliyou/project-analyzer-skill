@@ -187,6 +187,11 @@ Call graph guidance:
 - Prefer annotating each important line in the call graph, not only the first line of each chain
 - If helper-returned data determines later branching, show that helper and the resulting branch explicitly
 - Prefer notes that explain what data is returned, what condition is checked, what side effect is triggered, or why the caller depends on that callee
+- Prefer flow-oriented sections that a human can read top-down, such as request submission, status lookup, worker execution, and runtime dependency refresh
+- Show branch points explicitly and label what causes the branch, such as request type, task state, helper return value, or strategy selection
+- For important edges, explain both the action and the purpose instead of only naming the callee
+- When a value produced by one call is consumed by the next step, mention that handoff in the annotation when it is statically visible
+- Aim for enough annotation that a reader can follow the main path without reopening every referenced source file
 - If static analysis cannot prove a call edge, label it as inferred
 
 ## `mock-data-stages.md`

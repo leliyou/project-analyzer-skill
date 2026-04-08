@@ -267,6 +267,11 @@ For call graph output:
 - when possible, annotate each important line in the call graph rather than only the top-level nodes
 - if a branch comes from a helper return value or downstream dependency, show that branch explicitly instead of compressing it into one summary line
 - prefer notes that explain data returned, conditions checked, downstream side effects, or why the edge exists
+- organize the call graph as readable flow sections, not just one flat tree; separate submission flow, status flow, worker flow, and runtime dependency flow when they exist
+- when a request path branches, show the branch point and label what causes the split, such as request method, task state, helper return value, or strategy choice
+- for important edges, explain both the action and the purpose, such as "enqueue task for async execution", "read result backend state", or "build filters used by downstream query"
+- when a function returns a value consumed by the next call, make that handoff visible in the note instead of leaving the relationship implicit
+- prefer enough annotation that a reader can understand the flow without opening the source for every edge
 - be explicit about where static inspection ends and inference begins
 
 #### `mock-data-stages.md`
