@@ -80,6 +80,18 @@ Diagram guidance:
 - Prefer vertical flow
 - Use real module or file names
 - Avoid over-detailing every helper unless it matters to flow
+- If the target repository already contains architecture or logic diagrams, inherit their style before falling back to a generic format
+- Match the repository's preferred language when existing docs make it obvious
+- If the repository uses grouped sections such as API / Worker / Core Engine / Ops, preserve that structure
+- If the repository uses rich inline annotations such as queue names, helper functions, or config files, keep them when code confirms them
+- Prefer continuity with existing house style over inventing a brand-new diagram layout
+
+Style inheritance order:
+
+1. Existing target-project analysis docs and diagram samples
+2. Existing target-project README or onboarding docs
+3. The examples in this skill repository
+4. Minimal generic fallback
 
 ## `mock-data-stages.md`
 
@@ -128,3 +140,9 @@ When the user asks to regenerate docs:
 docs/architecture-analysis-v2.md
 docs/mock-data-stages-v2.md
 ```
+
+When the target project contains both legacy analysis files and `docs/` outputs:
+
+- use the legacy files as style references
+- use the current codebase as the authority on technical content
+- refresh the `docs/` outputs so they read like the legacy docs, not like unrelated generic templates

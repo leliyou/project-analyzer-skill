@@ -30,6 +30,41 @@ User
                 └── storage.py
 ```
 
+## Example Rich Program Architecture Diagram
+
+```text
+用户 / 调用方
+  │
+  ├──── HTTP API ─────────────────────────────────────────────
+  │       │
+  │       ▼
+  │     api/app.py   （Flask /submit, /status）
+  │       │
+  │       ├── 参数校验 / 鉴权
+  │       │     └── api/utils.py
+  │       │           ├── require_auth()
+  │       │           └── response()
+  │       │
+  │       └── 异步投递任务
+  │             └── worker.submit_job  →  Queue: jobs:default
+  │
+  ├──── Worker ───────────────────────────────────────────────
+  │       │
+  │       ▼
+  │     worker/__init__.py
+  │       ├── submit_job(payload)
+  │       └── celeryconfig.py
+  │
+  └──── 核心处理层 ────────────────────────────────────────────
+          │
+          ▼
+        service/processor.py
+          ├── normalize_payload()
+          ├── run_pipeline()
+          ├── write_result()
+          └── notify_downstream()
+```
+
 ## Example Code Logic Diagram
 
 ```text
@@ -41,9 +76,53 @@ User
        ▼
  normalize payload
        ▼
-  execute service
+ execute service
        ▼
  write / respond
+```
+
+## Example Rich Code Logic Diagram
+
+```text
+                         ┌──────────────────────┐
+                         │     调用方 / 用户      │
+                         │   POST /submit        │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                         ┌──────────────────────┐
+                         │      api/app.py      │
+                         │      submit()        │
+                         └──────────┬───────────┘
+                                    │
+             ┌──────────────────────┼──────────────────────┐
+             │                      │                      │
+             ▼                      ▼                      ▼
+   ┌─────────────────┐   ┌──────────────────┐   ┌────────────────────┐
+   │ 参数校验         │   │ 鉴权/响应封装      │   │ 队列投递             │
+   │ validate()      │   │ api/utils.py     │   │ apply_async()      │
+   └────────┬────────┘   └────────┬─────────┘   └─────────┬──────────┘
+            │                     │                       │
+            └─────────────────────┴───────────────────────┘
+                                    │
+                                    ▼
+                        ┌─────────────────────────┐
+                        │      worker task        │
+                        │    submit_job()         │
+                        └────────────┬────────────┘
+                                     │
+                                     ▼
+                        ┌─────────────────────────┐
+                        │   service/processor.py  │
+                        │    run_pipeline()       │
+                        └────────────┬────────────┘
+                                     │
+                     ┌───────────────┼────────────────┐
+                     │               │                │
+                     ▼               ▼                ▼
+             ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+             │ normalize()  │ │ write_result │ │ notify()     │
+             └──────────────┘ └──────────────┘ └──────────────┘
 ```
 
 ## Example Mock Stage Pattern
@@ -90,3 +169,4 @@ Raw request args
 - Technical but readable
 - No filler
 - Honest about inferred parts
+- When a repository already has a stronger visual/documentation style, follow that style instead of these minimal examples

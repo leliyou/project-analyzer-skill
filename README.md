@@ -15,6 +15,8 @@ The skill is designed for a very practical workflow:
 
 It is intentionally generic and not tied to any single business domain.
 
+Even though the skill is generic, it should not ignore a target repository's existing documentation style. If the target project already has architecture notes, older analysis markdown, or plain-text diagram samples, the skill should reuse that style as presentation guidance while still verifying technical facts from code.
+
 ## What The Skill Produces
 
 When invoked on a target project, the skill should generate a `docs/` directory under that project root and write one or more markdown files.
@@ -149,6 +151,21 @@ Good output includes:
 - actual entrypoints
 - honest notes on uncertain parts
 - mock data that mirrors the code-confirmed structure
+- diagram style continuity with existing docs inside the target repository
+
+If the target repository already contains files such as:
+
+- `architecture_analysis.md`
+- `mock_data_stages.md`
+- `.txt` diagram drafts
+
+those files should be treated as style references for:
+
+- document language
+- diagram density
+- section naming
+- connector characters and indentation
+- whether functions and queue names are shown inline
 
 The `mock-data-stages.md` output should distinguish between:
 

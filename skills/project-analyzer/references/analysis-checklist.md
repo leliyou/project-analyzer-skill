@@ -9,6 +9,8 @@ Use this checklist while analyzing a repository.
 - Runtime and language identified
 - Dependency manifests identified
 - Config files identified
+- Existing analysis docs or diagram samples identified
+- Preferred documentation language identified
 
 ## Entrypoints
 
@@ -43,3 +45,5 @@ Not every project has all of these. Identify the ones that exist.
 - Logic diagram uses real functions/files when available
 - Mock data stages match the actual code structure
 - Uncertainties clearly marked
+- If existing docs exist, new output visibly matches their diagram style and terminology
+- Old docs were used as style input, not blindly copied as factual truth

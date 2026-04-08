@@ -24,6 +24,12 @@ Primary deliverables:
 
 If the project is very small, it is fine to produce only the latter two files, but the default should be all three.
 
+Important style rule:
+
+- If the target repository already contains analysis docs, architecture drafts, `.txt` diagram samples, or earlier generated files, inspect them before writing new docs
+- Prefer inheriting the target repository's existing language, heading style, diagram density, indentation, connector characters, and section naming when those examples are clearly intentional
+- Do not treat existing analysis files as ground truth for technical facts without verification, but do treat them as strong style guidance for presentation
+
 ## When To Use
 
 Use this skill when the user asks for any of the following:
@@ -80,6 +86,19 @@ Focus on files that explain structure:
 - config files
 - deployment files
 
+Also look for project-local style references before generating docs:
+
+- existing `docs/*.md` analysis files
+- root-level `*architecture*.md`, `*mock*stage*.md`, `*.txt`, or diagram drafts
+- hand-written onboarding notes that show preferred terminology or diagram formatting
+
+If such files exist, summarize:
+
+- preferred document language, such as Chinese vs English
+- whether diagrams are compact or highly annotated
+- whether function names are shown in the diagrams
+- whether module grouping uses swimlanes, sections, or layered blocks
+
 ### 3. Identify The Main Execution Paths
 
 Infer one or more core flows the user would care about. Common examples:
@@ -98,6 +117,12 @@ For each important flow, identify:
 - Output or side effects
 
 Be explicit when something is inferred from code structure rather than directly proven.
+
+When the repository already has older analysis docs:
+
+- preserve the same primary execution path if it is still valid
+- update file names, call chains, and responsibilities only where the code proves a change
+- prefer continuity of wording and diagram structure over inventing a new format
 
 ### 4. Build Three Output Documents
 
@@ -121,6 +146,14 @@ Include:
 - Code logic diagram in plain-text code block
 - Main modules and responsibilities
 - Key call chains
+
+If the target repository already has a recognizable architecture-doc style, match it closely. In particular:
+
+- keep the same document language when the repository clearly prefers one language
+- if existing diagrams use swimlane-like grouping such as `HTTP API`, `Celery Worker`, `核心补丁引擎`, preserve that pattern
+- if existing diagrams annotate functions such as `require_auth()`, `_get_origin()`, `write_data()`, include that level of detail when the code supports it
+- if existing diagrams use wide separators, arrows, inline comments, or layered sections, prefer that richer style over a minimal generic tree
+- if there is both an old `architecture_analysis.md` and a new `docs/architecture-analysis.md`, use the old file as style guidance and the current code as fact source
 
 Prefer diagrams that look like:
 
@@ -146,6 +179,8 @@ And:
       ▼
    downstream
 ```
+
+But do not stop at these minimal examples when the repository already demonstrates a richer house style.
 
 #### `mock-data-stages.md`
 
@@ -187,6 +222,13 @@ When mock data is partially inferred, label it clearly:
 
 - `Code-confirmed structure`
 - `Illustrative mock values`
+
+For architecture and logic diagrams:
+
+- prefer real function names over generic labels like "validate input" when the function is visible in code
+- prefer real queue names, config files, and service names when they are statically discoverable
+- include module layering or operational scripts if the repository's existing docs highlight them
+- avoid flattening a richly structured backend into a simplistic four-box flow
 
 ### 6. Explain Uncertainty Honestly
 
@@ -238,6 +280,14 @@ Include these sections:
 - Do not overwrite unrelated docs
 - If a same-named analysis file already exists, update it only if the user is clearly asking for regeneration; otherwise create a timestamped variant or ask if overwrite is important
 
+When existing non-`docs/` analysis files are present, such as:
+
+- `architecture_analysis.md`
+- `mock_data_stages.md`
+- `.text.txt`
+
+use them as formatting references, not as output targets, unless the user explicitly asks to regenerate those exact files.
+
 ## Investigation Tips
 
 - Start from entrypoints and trace inward
@@ -245,6 +295,8 @@ Include these sections:
 - Use worker/task registration files to locate async flows
 - Use helper libraries to identify storage and integration layers
 - Use logs, example payloads, and inline comments when available
+- Compare old generated docs against current code before replacing them
+- If a sample file already contains a better-looking diagram style, imitate the style but refresh the factual content from source code
 
 ## References
 
