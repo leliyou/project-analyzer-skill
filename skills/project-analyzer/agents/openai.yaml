@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Analyzer"
+  short_description: "Analyze a repo and generate docs"
+  default_prompt: "Use $project-analyzer to inspect this repository and generate architecture, logic-flow, and mock-data documentation."
