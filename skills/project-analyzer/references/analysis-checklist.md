@@ -29,6 +29,8 @@ Not every project has all of these. Identify the ones that exist.
 - Business logic layer
 - Data access layer
 - External integration layer
+- Caller/callee relationships for at least one important flow
+- Helper functions that materially affect later control flow
 
 ## Infrastructure
 
@@ -43,6 +45,7 @@ Not every project has all of these. Identify the ones that exist.
 - At least one main flow traced end-to-end
 - Architecture diagram uses real project names
 - Logic diagram uses real functions/files when available
+- Call graph identifies real caller -> callee edges for at least one important chain
 - Mock data stages match the actual code structure
 - Uncertainties clearly marked
 - If existing docs exist, new output visibly matches their diagram style and terminology

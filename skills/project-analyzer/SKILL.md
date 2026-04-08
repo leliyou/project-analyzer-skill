@@ -1,6 +1,6 @@
 ---
 name: project-analyzer
-description: Use when analyzing a local code repository and producing architecture diagrams, code logic flow diagrams, and stage-by-stage mock data examples. Trigger when the user wants to understand an unfamiliar project, document system structure, explain execution flow, or generate markdown docs under the target project's docs directory.
+description: Use when analyzing a local code repository and producing architecture diagrams, code logic flow diagrams, code call graphs, and stage-by-stage mock data examples. Trigger when the user wants to understand an unfamiliar project, document system structure, explain execution flow, or generate markdown docs under the target project's docs directory.
 ---
 
 # Project Analyzer
@@ -22,9 +22,10 @@ Primary deliverables:
 
 - `docs/project-overview.md`
 - `docs/architecture-analysis.md`
+- `docs/code-call-graph.md`
 - `docs/mock-data-stages.md`
 
-If the project is very small, it is fine to produce only the latter two files, but the default should be all three.
+If the project is very small, it is fine to produce only the most relevant files, but the default should include all four.
 
 Important style rule:
 
@@ -35,6 +36,7 @@ Important style rule:
 Important language rule:
 
 - If the user explicitly asks for Chinese, English, 中文, 英文, or similar wording, that explicit language choice overrides the repository default
+- Treat short aliases such as `zh`, `cn`, `zh-CN`, `en`, and `en-US` as explicit language instructions when they appear in the user's skill invocation or request
 - If the user says bilingual or asks for two languages, prefer asking or generating one language unless they clearly want duplicated docs
 - If no language is specified, follow the target repository's dominant existing documentation language
 
@@ -46,6 +48,7 @@ Use this skill when the user asks for any of the following:
 - Analyze a repository at a given path
 - Generate a program architecture diagram
 - Generate a code logic diagram
+- Generate a code call graph
 - Explain module responsibilities and call chains
 - Show what data looks like at each stage of a workflow
 - Produce mock input/output structures for a project flow
@@ -71,8 +74,14 @@ Confirm the resolved target in your progress update.
 Also resolve the requested output language from the user's instruction.
 
 - Examples: `用中文生成`, `generate in English`, `文档输出为中文`
+- Also accept concise aliases such as `zh`, `cn`, `zh-CN`, `en`, `en-US`
 - If the user gives no explicit preference, infer from repository docs
 - State the resolved language in your progress update
+
+Recommended interpretation:
+
+- `zh`, `cn`, `zh-CN` => Chinese
+- `en`, `en-US` => English
 
 ### 2. Inspect The Repository Shape
 
@@ -140,7 +149,7 @@ When the repository already has older analysis docs:
 - update file names, call chains, and responsibilities only where the code proves a change
 - prefer continuity of wording and diagram structure over inventing a new format
 
-### 4. Build Three Output Documents
+### 4. Build Four Output Documents
 
 Write the following files into the target project's `docs/` directory.
 
@@ -168,6 +177,8 @@ If the target repository already has a recognizable architecture-doc style, matc
 - keep the same document language when the repository clearly prefers one language
 - if existing diagrams use swimlane-like grouping such as `HTTP API`, `Celery Worker`, `核心补丁引擎`, preserve that pattern
 - if existing diagrams annotate functions such as `require_auth()`, `_get_origin()`, `write_data()`, include that level of detail when the code supports it
+- if existing diagrams add inline responsibility notes after functions, such as `← 查 InfluxDB 源数据` or `← 回写 InfluxDB`, preserve that style when the code meaning is clear
+- in the program architecture diagram, add an explanatory note for each important file line whenever the code makes that role clear
 - if existing diagrams use wide separators, arrows, inline comments, or layered sections, prefer that richer style over a minimal generic tree
 - if there is both an old `architecture_analysis.md` and a new `docs/architecture-analysis.md`, use the old file as style guidance and the current code as fact source
 
@@ -176,6 +187,13 @@ Language precedence for all generated docs:
 1. Explicit user instruction about output language
 2. Existing target-project documentation language
 3. Skill repository examples and defaults
+
+Short alias examples that should be honored:
+
+- `/project-analyzer zh .`
+- `/project-analyzer en .`
+- `/project-analyzer . zh`
+- `/project-analyzer /path/to/repo en`
 
 Prefer diagrams that look like:
 
@@ -204,6 +222,49 @@ And:
 
 But do not stop at these minimal examples when the repository already demonstrates a richer house style.
 
+For detailed code logic diagrams:
+
+- treat the code logic diagram primarily as a call-relationship diagram, not just a sequence of boxes with labels
+- each major box should contain the file or module name plus a role description for that layer
+- each major box should list the main methods or numbered steps inside the box when code confirms them
+- prefer `1. ... 2. ... 3. ...` descriptions inside the box over a single vague label when the implementation has multiple steps
+- if a box represents a processor, worker, or orchestrator, show the internal sequence of what it does
+- when line numbers are statically discoverable, prefer `path:line method()` format such as `api/app.py:42 submit()`
+- when a method makes important internal calls, list the main called functions or helper methods under it instead of stopping at the top-level method name
+- do not decide branching only from route names or top-level method names; branch according to the real call graph and data dependencies visible in code
+- if a function calls other functions to fetch results, compute intermediate values, or decide the next step, show those calls as child branches or downstream boxes when they materially affect the flow
+
+#### `code-call-graph.md`
+
+This file is strongly recommended whenever the repository has non-trivial orchestration, worker flows, helper-heavy business logic, or multiple entrypoints.
+
+Include:
+
+- a top-level call graph overview
+- one or more focused call-chain sections for the most important flows
+- caller -> callee relationships across files, modules, and infrastructure boundaries
+- internal helper calls where they materially affect control flow or returned results
+
+Good sections often include:
+
+- overall call graph
+- API request call chain
+- worker / queue call chain
+- core engine internal function call chain
+- configuration and runtime dependency call chain
+
+For call graph output:
+
+- treat this as a dedicated "who calls whom" document, separate from the broader architecture summary
+- prefer real caller/callee names over generic prose
+- prefer expanding important helper calls when they determine later behavior
+- include line numbers when they are easy to derive statically
+- when useful, group by entrypoint, worker, scheduler, or core module
+- add short inline notes for important caller, callee, helper, and dependency lines when the role is clear from static inspection
+- when possible, annotate each important line in the call graph rather than only the top-level nodes
+- if a branch comes from a helper return value or downstream dependency, show that branch explicitly instead of compressing it into one summary line
+- be explicit about where static inspection ends and inference begins
+
 #### `mock-data-stages.md`
 
 This file is required for this skill.
@@ -216,6 +277,8 @@ For at least one important project flow, provide:
 - Output shape
 - Mock JSON or structured demo data
 - Notes on fields and meaning
+- A brief explanation of what changed at that stage and why it matters
+- A clear distinction between code-confirmed structure and illustrative mock values when both appear
 
 Good stages often include:
 
@@ -234,6 +297,14 @@ If the project does not have obvious JSON payloads, adapt the examples to the re
 - ORM objects
 - rendered templates
 
+Preferred mock-document style:
+
+- start with a short note that the examples are demo data shaped from the current code, not production values
+- use stage-by-stage sections with concrete headings instead of a single large dump
+- include short field-structure notes when a payload shape is easier to understand in text than in JSON alone
+- when the code adds execution context, show the "before" and "after" payloads as separate stages
+- when runtime configuration fills parts of the data, say that explicitly and label the downstream examples as inferred or illustrative
+
 ### 5. Favor Concrete Outputs Over Generic Commentary
 
 Do not write vague summaries like "the project has several modules." Instead, name the files and functions.
@@ -250,6 +321,13 @@ For architecture and logic diagrams:
 - prefer real function names over generic labels like "validate input" when the function is visible in code
 - prefer real queue names, config files, and service names when they are statically discoverable
 - include module layering or operational scripts if the repository's existing docs highlight them
+- when functions in the diagram are important, add brief inline notes after them using the repository's preferred style, such as `← 查询源数据`, `← 触发下游任务`, `← 写回数据库`
+- in the program architecture diagram, avoid bare file names with no explanation; add a role note or child-method explanation for each important file line
+- in the code logic diagram, avoid boxes that only contain a title; include concrete methods or numbered substeps inside each meaningful box
+- in the code logic diagram, prefer `path:line method()` over `method()` alone when line numbers are easy to obtain
+- if internal calls are visible, show the real helper names, such as `_get_sql()`, `apply_async()`, `require_auth()`, rather than generic phrases
+- if a function depends on helper-returned results, split that dependency into branches or downstream boxes rather than compressing it into one summary line
+- keep box borders visually aligned when drawing text boxes; prefer consistent widths over jagged right edges
 - avoid flattening a richly structured backend into a simplistic four-box flow
 
 ### 6. Explain Uncertainty Honestly
@@ -284,6 +362,17 @@ Include these sections:
 - `## Module Responsibilities`
 - `## Key Execution Paths`
 
+### Minimal `code-call-graph.md`
+
+Include these sections:
+
+- `# Code Call Graph`
+- `## Overview Call Graph`
+- `## Call Chain 1 ...`
+- `## Call Chain 2 ...`
+- `## Runtime Dependency Chain`
+- `## Notes On Inference`
+
 ### Minimal `mock-data-stages.md`
 
 Include these sections:
@@ -305,6 +394,7 @@ Include these sections:
 When existing non-`docs/` analysis files are present, such as:
 
 - `architecture_analysis.md`
+- `code_call_graph.md`
 - `mock_data_stages.md`
 - `.text.txt`
 

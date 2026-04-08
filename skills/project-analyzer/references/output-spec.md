@@ -7,6 +7,7 @@ This file defines the expected deliverables for `project-analyzer`.
 Default rule:
 
 - If the user explicitly requests an output language, use that language for generated docs
+- Treat short aliases such as `zh`, `cn`, `zh-CN`, `en`, and `en-US` as explicit language requests
 - Otherwise infer the preferred language from the target repository's existing docs
 
 Apply the chosen language to:
@@ -38,6 +39,7 @@ Default files:
 ```text
 docs/project-overview.md
 docs/architecture-analysis.md
+docs/code-call-graph.md
 docs/mock-data-stages.md
 ```
 
@@ -107,6 +109,14 @@ Diagram guidance:
 - Match the repository's preferred language when existing docs make it obvious
 - If the repository uses grouped sections such as API / Worker / Core Engine / Ops, preserve that structure
 - If the repository uses rich inline annotations such as queue names, helper functions, or config files, keep them when code confirms them
+- If the repository uses inline responsibility notes after function names, such as `← query source data` or `← 回写 InfluxDB`, keep that pattern in the generated diagram
+- In the program architecture diagram, each important file line should preferably include a short role note, inline comment, or child-method explanation
+- In the code logic diagram, each major box should show concrete methods or numbered internal steps instead of only a high-level title
+- In the code logic diagram, prefer `path:line method()` when line numbers are easy to derive from static inspection
+- If a method internally calls other important helpers, list those helper calls inside the box when they materially explain the flow
+- Do not infer branches only from endpoint or method names; branches should follow the actual helper calls, returned values, and downstream dependencies visible in code
+- If a helper call returns data that determines later behavior, show that helper as a branch or downstream node when it materially affects understanding
+- Keep monospace box borders visually aligned; avoid diagrams whose right edges drift line by line
 - Prefer continuity with existing house style over inventing a brand-new diagram layout
 
 Style inheritance order:
@@ -121,6 +131,61 @@ Language resolution order:
 1. Explicit user request
 2. Existing target-project docs
 3. Skill default examples
+
+Alias mapping guidance:
+
+- `zh`, `cn`, `zh-CN` => Chinese
+- `en`, `en-US` => English
+
+## `code-call-graph.md`
+
+Purpose:
+
+- Show caller/callee relationships as a dedicated document
+
+Recommended outline:
+
+```markdown
+# Code Call Graph
+
+## Overview Call Graph
+
+```text
+...
+```
+
+## Call Chain 1: ...
+
+```text
+...
+```
+
+## Call Chain 2: ...
+
+```text
+...
+```
+
+## Runtime Dependency Chain
+
+```text
+...
+```
+
+## Notes On Inference
+```
+
+Call graph guidance:
+
+- Prefer dedicated caller -> callee relationships over broad architectural summaries
+- Use real file/module/function names
+- Include helper calls when they materially change control flow or returned values
+- Prefer `path:line method()` when line numbers are statically available
+- Separate independent entry chains when the project has API, worker, scheduler, or CLI entrypoints
+- Add short inline notes for important lines when static inspection makes the role clear
+- Prefer annotating each important line in the call graph, not only the first line of each chain
+- If helper-returned data determines later branching, show that helper and the resulting branch explicitly
+- If static analysis cannot prove a call edge, label it as inferred
 
 ## `mock-data-stages.md`
 
@@ -156,6 +221,10 @@ Mock guidance:
 - Use real field names when code confirms them
 - Mark mock values as illustrative
 - Distinguish code-confirmed structure from inferred demo content
+- Prefer stage-by-stage payload snapshots over one large undifferentiated example
+- For each meaningful stage, include code owner, what changed, and why that output shape exists
+- Add field-structure notes when the payload shape mixes variants, nested keys, or runtime-enriched fields
+- When runtime configuration, external services, or scheduler data fill part of the payload, label the resulting mock as inferred or illustrative
 
 ## Regeneration Behavior
 
@@ -167,6 +236,7 @@ When the user asks to regenerate docs:
 
 ```text
 docs/architecture-analysis-v2.md
+docs/code-call-graph-v2.md
 docs/mock-data-stages-v2.md
 ```
 

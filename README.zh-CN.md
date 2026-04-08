@@ -10,7 +10,7 @@
 
 - 分析当前项目或指定路径下的项目
 - 梳理项目入口、模块关系、执行链路
-- 生成程序架构图和代码逻辑图
+- 生成程序架构图、代码逻辑图和代码调用图
 - 生成核心流程各阶段的数据结构说明与 mock 数据示例
 - 将结果直接写入目标项目的 `docs/` 目录，而不只是临时在对话里回答
 
@@ -27,6 +27,7 @@
 ```text
 docs/project-overview.md
 docs/architecture-analysis.md
+docs/code-call-graph.md
 docs/mock-data-stages.md
 ```
 
@@ -44,6 +45,7 @@ docs/mock-data-stages.md
 - 分析一个陌生代码仓库
 - 生成程序架构图
 - 生成代码逻辑图
+- 生成代码调用图
 - 梳理主流程调用链
 - 说明模块职责
 - 输出某个核心流程每个阶段的数据结构
@@ -76,6 +78,7 @@ Skill 的核心流程大致是：
 语言规则：
 
 - 如果用户明确要求“用中文”或“用英文”，Skill 必须按指定语言输出
+- 如果用户直接写 `zh`、`cn`、`zh-CN`、`en`、`en-US` 这样的短别名，也视为明确指定语言
 - 如果用户没有明确说语言，Skill 会优先参考目标仓库里已有文档的主语言
 - 语言只影响标题、说明文字和注释，不影响源码标识符、文件名、函数名、队列名等真实技术名词
 
@@ -144,10 +147,22 @@ npx skills add <你的GitHub用户名或组织>/project-analyzer-skill/skills/pr
 /project-analyzer . 用中文生成文档
 ```
 
+使用短别名指定中文：
+
+```text
+/project-analyzer zh .
+```
+
 指定用英文输出：
 
 ```text
 /project-analyzer . generate docs in English
+```
+
+使用短别名指定英文：
+
+```text
+/project-analyzer en .
 ```
 
 ## 预期输出风格
@@ -200,6 +215,7 @@ Skill 主体定义文件，包含：
 
 - `project-overview.md`
 - `architecture-analysis.md`
+- `code-call-graph.md`
 - `mock-data-stages.md`
 
 ### `skills/project-analyzer/references/analysis-checklist.md`
@@ -218,6 +234,7 @@ Skill 主体定义文件，包含：
 
 - 程序架构图
 - 代码逻辑图
+- 代码调用图
 - mock 数据阶段示例
 
 ## 本地维护建议

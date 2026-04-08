@@ -11,7 +11,7 @@ The skill is designed for a very practical workflow:
 - analyze the current project or a specified local repository
 - understand entrypoints, modules, and execution paths
 - generate plain markdown documentation into the target repository
-- include architecture diagrams, code logic diagrams, and stage-by-stage mock data examples
+- include architecture diagrams, code logic diagrams, code call graphs, and stage-by-stage mock data examples
 
 It is intentionally generic and not tied to any single business domain.
 
@@ -26,6 +26,7 @@ Default outputs:
 ```text
 docs/project-overview.md
 docs/architecture-analysis.md
+docs/code-call-graph.md
 docs/mock-data-stages.md
 ```
 
@@ -45,6 +46,7 @@ These files are meant to be useful to:
 - tracing a main runtime flow
 - generating text-based architecture diagrams
 - generating text-based code logic diagrams
+- generating text-based code call graphs
 - generating stage-by-stage data shape examples
 - writing the output as project-local markdown docs
 
@@ -74,6 +76,7 @@ The default target resolution rule is:
 Language rule:
 
 - if the user explicitly asks for Chinese, English, or another language, the generated docs should use that language
+- short aliases such as `zh`, `cn`, `zh-CN`, `en`, and `en-US` should also count as explicit language instructions
 - if the user does not specify a language, infer it from the target repository's existing docs when possible
 - language selection should affect headings and explanatory prose, but not code identifiers, file paths, function names, queue names, or config keys
 
@@ -152,10 +155,22 @@ Analyze the current project and write docs in Chinese:
 /project-analyzer . generate docs in Chinese
 ```
 
+Use a short alias to force Chinese output:
+
+```text
+/project-analyzer zh .
+```
+
 Analyze the current project and force English output:
 
 ```text
 /project-analyzer . generate docs in English
+```
+
+Use a short alias to force English output:
+
+```text
+/project-analyzer en .
 ```
 
 ## Expected Output Style
@@ -170,6 +185,7 @@ Good output includes:
 - honest notes on uncertain parts
 - mock data that mirrors the code-confirmed structure
 - diagram style continuity with existing docs inside the target repository
+- call graph sections that explicitly show caller -> callee relationships
 
 If the target repository already contains files such as:
 
