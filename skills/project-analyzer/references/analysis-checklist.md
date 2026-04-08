@@ -52,6 +52,7 @@ Not every project has all of these. Identify the ones that exist.
 - Call graph annotations explain data flow, decisions, or side effects where statically visible
 - Mock data stages match the actual code structure
 - Mock coverage includes all major supported types or explicitly explains why some were summarized
+- When only a small number of major types exist, each one is expanded as its own stage chain instead of being reduced to a short difference note
 - Uncertainties clearly marked
 - If existing docs exist, new output visibly matches their diagram style and terminology
 - Old docs were used as style input, not blindly copied as factual truth

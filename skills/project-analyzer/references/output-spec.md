@@ -228,9 +228,10 @@ Mock guidance:
 - Add field-structure notes when the payload shape mixes variants, nested keys, or runtime-enriched fields
 - When runtime configuration, external services, or scheduler data fill part of the payload, label the resulting mock as inferred or illustrative
 - Detect primary request types, task modes, or dispatch branches from code before selecting stages
-- If multiple top-level types are clearly supported, cover each major type instead of documenting only the richest branch
-- When one type shares most stages with another, include a compact divergence section that shows where the payload or processing path changes
-- If only one type is expanded end-to-end, explicitly explain why the other major types were summarized and still provide their key request and branch shapes
+- If two to four top-level types are clearly supported, give each major type its own end-to-end stage chain rather than documenting only the richest branch
+- Shared early stages may be referenced briefly, but each major type should still show its own later-stage payload evolution and final output shape
+- Only summarize a type instead of fully expanding it when there are more than four materially different types or when code shows it is just an alias of another path
+- If any major type is summarized, explicitly explain why and still show its request shape, branch point, and final payload difference
 
 ## Regeneration Behavior
 

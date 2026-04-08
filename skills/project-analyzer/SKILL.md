@@ -310,9 +310,11 @@ Preferred mock-document style:
 - when runtime configuration fills parts of the data, say that explicitly and label the downstream examples as inferred or illustrative
 - detect the main top-level operation types, request modes, or dispatch branches from code before writing the mock document
 - if the project clearly supports multiple primary types, do not document only one rich branch and omit the others
-- when there are two to four major types, include each one in the mock document with at least its request shape, branch point, and stage-specific payload differences
-- if one type gets the full end-to-end expansion and another shares most stages, still add a compact section for the secondary type that shows where it diverges
-- if there are too many variants to fully expand, document the major ones and explicitly list the remaining variants with short notes about why they were summarized
+- when there are two to four major types, expand each major type as its own stage chain with request, normalized input, execution-context enrichment, source/intermediate data, patch or transform result, and final write or response stages when those stages exist in code
+- do not treat a second major type as a mere appendix or short divergence note when the repository only has a small number of primary types
+- if multiple major types share some early stages, you may state that the first one reuses the same validation or routing logic, but still show the later stages for each type separately with concrete payload examples
+- only summarize variants instead of fully expanding them when there are more than four materially different types or when the code proves they are thin aliases of one another
+- if any type is summarized rather than fully expanded, explicitly explain why and still provide its request shape, branch point, and final payload difference
 
 ### 5. Favor Concrete Outputs Over Generic Commentary
 

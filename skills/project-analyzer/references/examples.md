@@ -274,11 +274,9 @@ This example uses demo values shaped from code structure rather than production 
 ## Supported Operation Types
 
 - `STANDARD_SUBMIT`: the default path that creates or updates a task with the incoming payload
-- `REWRITE_FIELDS`: an alternate path that keeps the same entrypoint but rewrites part of the payload before execution
+- `REWRITE_FIELDS`: an alternate path that rewrites part of the payload before execution
 
-## Shared Stages
-
-Stages 1 to 3 are shared by both operation types. The divergence begins when the processor decides which transformation strategy to execute.
+Both operation types are first-class branches in this example, so both are expanded below instead of reducing the second one to a short difference note.
 
 ## Stage 1: API Request Payload
 
@@ -476,13 +474,122 @@ execution_payload = {
 - This is a good place to show fields added by helper functions such as normalization, filter-building, or runtime config loading.
 - If the code preserves both original and normalized forms, show both rather than collapsing them into one object.
 
-## Type Divergence: `REWRITE_FIELDS`
+## `REWRITE_FIELDS` Stage 1: API Request Payload
 
-### Branch point
+### Code owner
 
-`service/processor.py:42 run_pipeline()` chooses a rewrite helper instead of the default execution helper when the mode indicates field remapping.
+`api/app.py`
 
-### Divergent payload shape
+### What happens here
+
+The HTTP layer accepts a request that includes an explicit field-remapping intent.
+
+### Code-confirmed structure
+
+```text
+{
+  "user_id": string,
+  "items": list[object],
+  "options": object,
+  "field_mapping": object,
+  "mode": "REWRITE_FIELDS"
+}
+```
+
+### Mock data
+
+```json
+{
+  "user_id": "u_123",
+  "items": [
+    {"sku": "sku-1", "qty": 2},
+    {"sku": "sku-2", "qty": 1}
+  ],
+  "options": {
+    "dry_run": true,
+    "priority": "high"
+  },
+  "field_mapping": {
+    "unit_price": "display_price"
+  },
+  "mode": "REWRITE_FIELDS"
+}
+```
+
+## `REWRITE_FIELDS` Stage 2: Validated Internal Params
+
+### Code owner
+
+`api/data_process.py`
+
+### What changed
+
+The API layer preserves the remapping directive while removing HTTP-only wrapper fields.
+
+### Mock data
+
+```json
+{
+  "user_id": "u_123",
+  "items": [
+    {"sku": "sku-1", "qty": 2},
+    {"sku": "sku-2", "qty": 1}
+  ],
+  "options": {
+    "dry_run": true,
+    "priority": "high"
+  },
+  "field_mapping": {
+    "unit_price": "display_price"
+  },
+  "mode": "REWRITE_FIELDS",
+  "request_id": "a9b2d1a8-6df7-4d33-a3cc-4f9d2b6a0e51"
+}
+```
+
+## `REWRITE_FIELDS` Stage 3: Worker Dispatch Payload
+
+### Code owner
+
+`worker/__init__.py` or `api/data_process.py`
+
+### What changed
+
+The task payload carries both the normalized request fields and the remapping plan into async execution.
+
+### Mock data
+
+```json
+{
+  "user_id": "u_123",
+  "items": [
+    {"sku": "sku-1", "qty": 2},
+    {"sku": "sku-2", "qty": 1}
+  ],
+  "options": {
+    "dry_run": true,
+    "priority": "high"
+  },
+  "field_mapping": {
+    "unit_price": "display_price"
+  },
+  "mode": "REWRITE_FIELDS",
+  "request_id": "a9b2d1a8-6df7-4d33-a3cc-4f9d2b6a0e51",
+  "submitted_at": "2026-04-08T10:30:00Z"
+}
+```
+
+## `REWRITE_FIELDS` Stage 4: Processor Rewrite Payload
+
+### Code owner
+
+`service/processor.py`
+
+### What changed
+
+`run_pipeline()` chooses the rewrite helper and builds a payload that contains both the original normalized data and the rewritten preview.
+
+### Output shape
 
 ```text
 rewrite_payload = {
@@ -519,10 +626,33 @@ rewrite_payload = {
 }
 ```
 
+## `REWRITE_FIELDS` Stage 5: Final Result Payload
+
+### Code owner
+
+`service/processor.py`
+
+### What changed
+
+The processor returns a result that emphasizes rewritten fields rather than only the default computed summary.
+
+### Mock data
+
+```json
+{
+  "request_id": "a9b2d1a8-6df7-4d33-a3cc-4f9d2b6a0e51",
+  "status": "success",
+  "rewritten_fields": ["display_price"],
+  "result_preview": [
+    {"sku": "sku-1", "display_price": 15.5},
+    {"sku": "sku-2", "display_price": 28.0}
+  ]
+}
+```
+
 ### Notes
 
-- This compact divergence section shows the second primary type without repeating every shared stage.
-- When a repository supports two or more main modes, generated docs should give each major mode at least this level of coverage.
+- When a repository supports two or more main modes, generated docs should expand each major mode at roughly this level instead of leaving one mode as a short appendix.
 
 ## Stage 5: Final Result Or Write Payload
 
