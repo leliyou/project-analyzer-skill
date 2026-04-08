@@ -2,6 +2,29 @@
 
 This file defines the expected deliverables for `project-analyzer`.
 
+## Language Selection
+
+Default rule:
+
+- If the user explicitly requests an output language, use that language for generated docs
+- Otherwise infer the preferred language from the target repository's existing docs
+
+Apply the chosen language to:
+
+- document titles
+- section headings
+- explanatory prose
+- notes on uncertainty
+
+Do not translate:
+
+- file paths
+- function names
+- class names
+- queue names
+- config keys
+- JSON field names unless the source project itself uses translated names
+
 ## Required Outputs
 
 Write analysis files under:
@@ -92,6 +115,12 @@ Style inheritance order:
 2. Existing target-project README or onboarding docs
 3. The examples in this skill repository
 4. Minimal generic fallback
+
+Language resolution order:
+
+1. Explicit user request
+2. Existing target-project docs
+3. Skill default examples
 
 ## `mock-data-stages.md`
 

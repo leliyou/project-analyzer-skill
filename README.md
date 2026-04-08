@@ -71,6 +71,12 @@ The default target resolution rule is:
 - if the user provides a path, analyze that path
 - otherwise analyze the current working directory
 
+Language rule:
+
+- if the user explicitly asks for Chinese, English, or another language, the generated docs should use that language
+- if the user does not specify a language, infer it from the target repository's existing docs when possible
+- language selection should affect headings and explanatory prose, but not code identifiers, file paths, function names, queue names, or config keys
+
 ## Repository Layout
 
 ```text
@@ -140,6 +146,18 @@ Analyze another repository:
 /project-analyzer /path/to/repo
 ```
 
+Analyze the current project and write docs in Chinese:
+
+```text
+/project-analyzer . generate docs in Chinese
+```
+
+Analyze the current project and force English output:
+
+```text
+/project-analyzer . generate docs in English
+```
+
 ## Expected Output Style
 
 The generated docs should be concrete rather than vague.
@@ -166,6 +184,8 @@ those files should be treated as style references for:
 - section naming
 - connector characters and indentation
 - whether functions and queue names are shown inline
+
+But if the user explicitly requests an output language, that explicit language choice takes precedence over the repository's default documentation language.
 
 The `mock-data-stages.md` output should distinguish between:
 

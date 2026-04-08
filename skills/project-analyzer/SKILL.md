@@ -15,6 +15,8 @@ Default behavior:
 - If the user provides a path, analyze that target project directory
 - Create a `docs/` directory under the target project if it does not exist
 - Write concrete markdown output files instead of replying only in chat
+- If the user explicitly specifies an output language, generate the docs in that language
+- If the user does not specify an output language, infer the preferred language from existing docs in the target repository when possible
 
 Primary deliverables:
 
@@ -29,6 +31,12 @@ Important style rule:
 - If the target repository already contains analysis docs, architecture drafts, `.txt` diagram samples, or earlier generated files, inspect them before writing new docs
 - Prefer inheriting the target repository's existing language, heading style, diagram density, indentation, connector characters, and section naming when those examples are clearly intentional
 - Do not treat existing analysis files as ground truth for technical facts without verification, but do treat them as strong style guidance for presentation
+
+Important language rule:
+
+- If the user explicitly asks for Chinese, English, 中文, 英文, or similar wording, that explicit language choice overrides the repository default
+- If the user says bilingual or asks for two languages, prefer asking or generating one language unless they clearly want duplicated docs
+- If no language is specified, follow the target repository's dominant existing documentation language
 
 ## When To Use
 
@@ -59,6 +67,12 @@ Determine the target directory from the user request.
 - Otherwise use the current working directory
 
 Confirm the resolved target in your progress update.
+
+Also resolve the requested output language from the user's instruction.
+
+- Examples: `用中文生成`, `generate in English`, `文档输出为中文`
+- If the user gives no explicit preference, infer from repository docs
+- State the resolved language in your progress update
 
 ### 2. Inspect The Repository Shape
 
@@ -98,6 +112,8 @@ If such files exist, summarize:
 - whether diagrams are compact or highly annotated
 - whether function names are shown in the diagrams
 - whether module grouping uses swimlanes, sections, or layered blocks
+
+If the user explicitly requested a language, do not let repository style references override that language choice. Only inherit the formatting style.
 
 ### 3. Identify The Main Execution Paths
 
@@ -154,6 +170,12 @@ If the target repository already has a recognizable architecture-doc style, matc
 - if existing diagrams annotate functions such as `require_auth()`, `_get_origin()`, `write_data()`, include that level of detail when the code supports it
 - if existing diagrams use wide separators, arrows, inline comments, or layered sections, prefer that richer style over a minimal generic tree
 - if there is both an old `architecture_analysis.md` and a new `docs/architecture-analysis.md`, use the old file as style guidance and the current code as fact source
+
+Language precedence for all generated docs:
+
+1. Explicit user instruction about output language
+2. Existing target-project documentation language
+3. Skill repository examples and defaults
 
 Prefer diagrams that look like:
 
@@ -287,6 +309,12 @@ When existing non-`docs/` analysis files are present, such as:
 - `.text.txt`
 
 use them as formatting references, not as output targets, unless the user explicitly asks to regenerate those exact files.
+
+When regenerating docs in a user-requested language:
+
+- keep filenames unchanged unless the user asks for separate bilingual variants
+- translate headings, connective prose, and explanatory notes into the requested language
+- keep source-code identifiers, file names, queue names, and config keys in their original form
 
 ## Investigation Tips
 

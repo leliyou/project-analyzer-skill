@@ -73,6 +73,12 @@ Skill 的核心流程大致是：
 - 如果用户没有传路径，就分析当前工作目录
 - 如果用户传了路径，就分析指定目录
 
+语言规则：
+
+- 如果用户明确要求“用中文”或“用英文”，Skill 必须按指定语言输出
+- 如果用户没有明确说语言，Skill 会优先参考目标仓库里已有文档的主语言
+- 语言只影响标题、说明文字和注释，不影响源码标识符、文件名、函数名、队列名等真实技术名词
+
 ## 仓库结构
 
 ```text
@@ -132,6 +138,18 @@ npx skills add <你的GitHub用户名或组织>/project-analyzer-skill/skills/pr
 /project-analyzer /path/to/repo
 ```
 
+指定用中文输出：
+
+```text
+/project-analyzer . 用中文生成文档
+```
+
+指定用英文输出：
+
+```text
+/project-analyzer . generate docs in English
+```
+
 ## 预期输出风格
 
 输出文档应尽量做到：
@@ -157,6 +175,8 @@ npx skills add <你的GitHub用户名或组织>/project-analyzer-skill/skills/pr
 - 是否展示函数名、队列名、配置文件
 - 是否使用分层块、泳道、宽分隔线
 - 标题命名和章节组织方式
+
+但如果你在调用时已经明确要求“用中文”或“用英文”，那么语言以你的显式指令为准，仓库已有文档只继续作为版式和图风格参考。
 
 `mock-data-stages.md` 尤其建议区分：
 
