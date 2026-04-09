@@ -187,7 +187,7 @@ External entrypoints                          ← Collect all upstream triggers
   │
   ├── HTTP POST /submit                       ← Start async task submission
   │   └── api/app.py:34 submit()              ← Parse request and enter submission path
-  │       └── api/data_process.py:18 DataProcessor.submit()
+  │       └── api/data_process.py:18 DataProcessor.submit() ← Normalize request and choose async dispatch target
   │           └── worker.submit_job.delay()   ← Hand off normalized payload to async worker
   │
   ├── HTTP GET /submit/<taskid>               ← Read task state or final result
@@ -196,7 +196,7 @@ External entrypoints                          ← Collect all upstream triggers
   │
   └── Worker / Scheduler                      ← Background execution or timed trigger
       └── worker/__init__.py:15 submit_job()  ← Execute queued payload in worker context
-          └── service/processor.py:42 run_pipeline()
+          └── service/processor.py:42 run_pipeline() ← Orchestrate the end-to-end worker flow
               ├── normalize_payload()         ← Prepare stable internal data before branching
               ├── _build_query()              ← Build source lookup parameters
               ├── _fetch_origin()             ← Load source data used by later computation
@@ -216,10 +216,10 @@ api/app.py:12 before_request()               ← Create request context used by 
   ▼
 api/app.py:20 authenticate()                 ← Decide whether the caller may enter business flow
   │
-  ├── auth failed
+  ├── auth failed                            ← Permission check rejects the request
   │   └── api/utils.py:30 response()         ← Return error response and stop further calls
   │
-  └── auth passed
+  └── auth passed                            ← Continue into validated submission flow
       ▼
 api/app.py:34 submit()                       ← Main HTTP submission entry
   ├── request.get_data()                     ← Read raw request payload from HTTP body
@@ -227,7 +227,7 @@ api/app.py:34 submit()                       ← Main HTTP submission entry
   ├── api/data_process.py:18 DataProcessor.submit()
   │   ├── _normalize_payload()               ← Convert request data into a stable internal shape
   │   ├── _select_worker()                   ← Choose queue/worker based on request mode
-  │   ├── worker.submit_job.delay()          ← Enqueue async execution and return task handle
+  │   ├── worker.submit_job.delay()          ← Enqueue async execution so the API returns quickly while a background worker handles the heavy job
   │   └── task.id                            ← Result handoff consumed by API layer
   └── api/utils.py:30 response()             ← Return `task_id` so caller can poll later
 ```
@@ -242,8 +242,8 @@ api/app.py:52 fetch(taskid)                  ← Enter result lookup path with k
   ├── AsyncResult(taskid)                    ← Read state/result from the backend store
   ├── task.state                             ← Branch on current execution state
   ├── task.info / task.result                ← Extract backend payload used in response
-  ├── if state in {"PENDING", "STARTED"}     ← Return progress-style response
-  ├── if state == "SUCCESS"                  ← Return final result payload
+  ├── if state in {"PENDING", "STARTED"}     ← Return progress-style response to caller
+  ├── if state == "SUCCESS"                  ← Return final result payload to caller
   └── api/utils.py:30 response()             ← Normalize backend state into API JSON shape
 ```
 
@@ -251,7 +251,7 @@ api/app.py:52 fetch(taskid)                  ← Enter result lookup path with k
 
 ```text
 worker/__init__.py:15 submit_job(payload)      ← Celery or worker task entry
-  ├── service/processor.py:18 normalize_payload()
+  ├── service/processor.py:18 normalize_payload() ← Convert worker payload into stable execution shape
   │   ├── _extract_fields()                    ← Pull out fields needed by later steps
   │   ├── _normalize_shape()                   ← Standardize the payload structure
   │   └── _fill_defaults()                     ← Fill optional values before execution

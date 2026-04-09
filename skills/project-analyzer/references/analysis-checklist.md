@@ -48,9 +48,11 @@ Not every project has all of these. Identify the ones that exist.
 - Architecture diagram uses real project names
 - Logic diagram uses real functions/files when available
 - Diagram annotations explain why important nodes matter, not only what they are called
+- Diagram annotations explain project-specific jargon and infrastructure names in plain language when they appear
 - Call graph identifies real caller -> callee edges for at least one important chain
 - Call graph annotations explain data flow, decisions, or side effects where statically visible
 - Call graph sections are readable as flows, with explicit branch points and result handoffs for the main paths
+- Call graph does not leave most node lines unlabeled; non-connector lines are generally annotated with purpose or result
 - Mock data stages match the actual code structure
 - Mock coverage includes all major supported types or explicitly explains why some were summarized
 - When only a small number of major types exist, each one is expanded as its own stage chain instead of being reduced to a short difference note

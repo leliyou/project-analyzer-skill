@@ -181,6 +181,8 @@ If the target repository already has a recognizable architecture-doc style, matc
 - in the program architecture diagram, add an explanatory note for each important file line whenever the code makes that role clear
 - if existing diagrams use wide separators, arrows, inline comments, or layered sections, prefer that richer style over a minimal generic tree
 - if there is both an old `architecture_analysis.md` and a new `docs/architecture-analysis.md`, use the old file as style guidance and the current code as fact source
+- when a line contains project-specific jargon, infrastructure terms, or opaque identifiers such as queue names, watcher names, broker names, or internal service names, keep the real identifier but add a plain-language explanation beside it
+- prefer explanations that a new teammate or non-author can understand on first read; do not assume the reader already knows what Celery, Sentinel, CQ, watcher, or a queue name means in this project
 
 Language precedence for all generated docs:
 
@@ -236,6 +238,7 @@ For detailed code logic diagrams:
 - prefer detailed inline notes over minimal labels; explain what the function reads, writes, returns, decides, or triggers when the code makes that visible
 - in program architecture, code logic, and call-graph outputs, annotate important nodes with concrete meanings such as input source, output payload, decision condition, side effect, queue handoff, or external dependency usage
 - when a module or function is shown because it sits on the critical path, the note should explain why it matters in that path, not only restate its name
+- when a note includes a technical identifier, also explain the practical effect in plain language, for example "dispatch to Celery queue `Patcher:data_patcher`, meaning the API hands the work to a background worker instead of executing it inline"
 
 #### `code-call-graph.md`
 
@@ -265,6 +268,7 @@ For call graph output:
 - when useful, group by entrypoint, worker, scheduler, or core module
 - add short inline notes for important caller, callee, helper, and dependency lines when the role is clear from static inspection
 - when possible, annotate each important line in the call graph rather than only the top-level nodes
+- in practice, every non-connector node line in the call graph should preferably carry an inline explanation unless the line is only a visual branch label
 - if a branch comes from a helper return value or downstream dependency, show that branch explicitly instead of compressing it into one summary line
 - prefer notes that explain data returned, conditions checked, downstream side effects, or why the edge exists
 - organize the call graph as readable flow sections, not just one flat tree; separate submission flow, status flow, worker flow, and runtime dependency flow when they exist
@@ -272,6 +276,7 @@ For call graph output:
 - for important edges, explain both the action and the purpose, such as "enqueue task for async execution", "read result backend state", or "build filters used by downstream query"
 - when a function returns a value consumed by the next call, make that handoff visible in the note instead of leaving the relationship implicit
 - prefer enough annotation that a reader can understand the flow without opening the source for every edge
+- if the edge uses a queue, cache, watcher, lock, or other infrastructure primitive, explain what that primitive does in the current flow rather than naming it alone
 - be explicit about where static inspection ends and inference begins
 
 #### `mock-data-stages.md`
@@ -338,6 +343,7 @@ For architecture and logic diagrams:
 - prefer real queue names, config files, and service names when they are statically discoverable
 - include module layering or operational scripts if the repository's existing docs highlight them
 - when functions in the diagram are important, add brief inline notes after them using the repository's preferred style, such as `← 查询源数据`, `← 触发下游任务`, `← 写回数据库`
+- when those inline notes contain internal jargon, extend them so a reader unfamiliar with the codebase can still understand the operational meaning
 - in the program architecture diagram, avoid bare file names with no explanation; add a role note or child-method explanation for each important file line
 - in the code logic diagram, avoid boxes that only contain a title; include concrete methods or numbered substeps inside each meaningful box
 - in the code logic diagram, prefer `path:line method()` over `method()` alone when line numbers are easy to obtain

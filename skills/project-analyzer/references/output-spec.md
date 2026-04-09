@@ -119,6 +119,7 @@ Diagram guidance:
 - Keep monospace box borders visually aligned; avoid diagrams whose right edges drift line by line
 - Prefer continuity with existing house style over inventing a brand-new diagram layout
 - Prefer detailed annotations on important files, methods, and edges; notes should explain inputs, outputs, decisions, side effects, or dependency usage when code makes them visible
+- When a note contains opaque project jargon or infrastructure identifiers, preserve the identifier but add a plain-language explanation of what it means in the current flow
 
 Style inheritance order:
 
@@ -185,6 +186,7 @@ Call graph guidance:
 - Separate independent entry chains when the project has API, worker, scheduler, or CLI entrypoints
 - Add short inline notes for important lines when static inspection makes the role clear
 - Prefer annotating each important line in the call graph, not only the first line of each chain
+- Prefer annotating nearly every non-connector line in the call graph so the flow is readable without mentally filling in unlabeled nodes
 - If helper-returned data determines later branching, show that helper and the resulting branch explicitly
 - Prefer notes that explain what data is returned, what condition is checked, what side effect is triggered, or why the caller depends on that callee
 - Prefer flow-oriented sections that a human can read top-down, such as request submission, status lookup, worker execution, and runtime dependency refresh
@@ -192,6 +194,7 @@ Call graph guidance:
 - For important edges, explain both the action and the purpose instead of only naming the callee
 - When a value produced by one call is consumed by the next step, mention that handoff in the annotation when it is statically visible
 - Aim for enough annotation that a reader can follow the main path without reopening every referenced source file
+- If a queue, lock, watcher, cache, or broker name appears, explain what role that primitive plays in the current path instead of assuming reader familiarity
 - If static analysis cannot prove a call edge, label it as inferred
 
 ## `mock-data-stages.md`
