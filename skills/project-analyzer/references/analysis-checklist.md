@@ -45,6 +45,7 @@ Not every project has all of these. Identify the ones that exist.
 ## Output Readiness
 
 - At least one main flow traced end-to-end
+- Coverage/evidence matrix built before writing
 - Architecture diagram uses real project names
 - Logic diagram uses real functions/files when available
 - Diagram annotations explain why important nodes matter, not only what they are called
@@ -56,6 +57,8 @@ Not every project has all of these. Identify the ones that exist.
 - Mock data stages match the actual code structure
 - Mock coverage includes all major supported types or explicitly explains why some were summarized
 - When only a small number of major types exist, each one is expanded as its own stage chain instead of being reduced to a short difference note
+- Each generated document includes metadata for `generated_by`, `verified_at`, `provenance`, and `coverage`
+- Evidence gaps are labeled explicitly instead of being hidden behind vague wording
 - Uncertainties clearly marked
 - If existing docs exist, new output visibly matches their diagram style and terminology
 - Old docs were used as style input, not blindly copied as factual truth

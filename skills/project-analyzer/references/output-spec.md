@@ -43,6 +43,28 @@ docs/code-call-graph.md
 docs/mock-data-stages.md
 ```
 
+## Metadata Header
+
+Each generated markdown file should start with a short metadata block immediately below the title.
+
+Recommended shape:
+
+```markdown
+> generated_by: project-analyzer
+> verified_at: 2026-04-09 14:30 Asia/Shanghai
+> provenance: static code inspection + config reading + target-repo style inheritance
+> coverage: request flow, worker flow, RESET, TAG_RESET
+> evidence_gap: runtime ZK payload is not present in the repository
+```
+
+Guidance:
+
+- `generated_by` should be constant for the skill
+- `verified_at` should be concrete, not relative wording like "today"
+- `provenance` should say what evidence sources were actually used
+- `coverage` should tell the reader what the document explicitly covers
+- `evidence_gap` is optional, but should be present when important facts are inferred or partial
+
 ## `project-overview.md`
 
 Purpose:
@@ -70,6 +92,7 @@ Content guidance:
 - Keep it concise
 - Use real file names and paths
 - Prefer "what exists" over speculation
+- Mention major covered systems and any obvious evidence gaps in the metadata block
 
 ## `architecture-analysis.md`
 
@@ -120,6 +143,7 @@ Diagram guidance:
 - Prefer continuity with existing house style over inventing a brand-new diagram layout
 - Prefer detailed annotations on important files, methods, and edges; notes should explain inputs, outputs, decisions, side effects, or dependency usage when code makes them visible
 - When a note contains opaque project jargon or infrastructure identifiers, preserve the identifier but add a plain-language explanation of what it means in the current flow
+- Prefer wording that a new teammate can understand without already knowing the repository's jargon
 
 Style inheritance order:
 
@@ -196,6 +220,7 @@ Call graph guidance:
 - Aim for enough annotation that a reader can follow the main path without reopening every referenced source file
 - If a queue, lock, watcher, cache, or broker name appears, explain what role that primitive plays in the current path instead of assuming reader familiarity
 - If static analysis cannot prove a call edge, label it as inferred
+- Use explicit `unknown:` or `evidence gap:` wording when a reader might otherwise mistake an inference for a confirmed fact
 
 ## `mock-data-stages.md`
 
@@ -240,6 +265,7 @@ Mock guidance:
 - Shared early stages may be referenced briefly, but each major type should still show its own later-stage payload evolution and final output shape
 - Only summarize a type instead of fully expanding it when there are more than four materially different types or when code shows it is just an alias of another path
 - If any major type is summarized, explicitly explain why and still show its request shape, branch point, and final payload difference
+- Use explicit `unknown:` or `evidence gap:` wording when runtime configuration or external systems determine part of the payload shape
 
 ## Regeneration Behavior
 
@@ -247,6 +273,7 @@ When the user asks to regenerate docs:
 
 - Update existing generated docs if they appear to be analysis outputs
 - Avoid touching unrelated hand-written docs
+- When regenerating multiple files, prefer drafting to a temporary docs subdirectory and replacing outputs as a batch instead of leaving half-updated files behind
 - If unsure, create a suffix variant such as:
 
 ```text

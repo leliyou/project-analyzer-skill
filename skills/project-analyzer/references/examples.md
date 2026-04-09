@@ -10,6 +10,16 @@ Use these examples as style guidance, not rigid templates.
 /project-analyzer /path/to/repo
 ```
 
+## Example Metadata Header
+
+```markdown
+> generated_by: project-analyzer
+> verified_at: 2026-04-09 14:30 Asia/Shanghai
+> provenance: static code inspection + config reading + target-repo style inheritance
+> coverage: API request flow, worker execution flow, status lookup flow
+> evidence_gap: runtime queue depth and remote service payloads are not visible from this repository
+```
+
 ## Example Program Architecture Diagram
 
 ```text
@@ -180,6 +190,12 @@ User
 ```markdown
 # Code Call Graph
 
+> generated_by: project-analyzer
+> verified_at: 2026-04-09 14:30 Asia/Shanghai
+> provenance: static code inspection + config reading
+> coverage: submission flow, status lookup flow, worker execution flow, runtime dependency flow
+> evidence_gap: actual broker state and runtime queue contents are not visible from source alone
+
 ## Overview Call Graph
 
 ```text
@@ -278,12 +294,19 @@ service/processor.py:42 run_pipeline()                ← Main execution chain
 
 - The example above uses generic file names and functions to demonstrate the output style rather than describe any one repository.
 - In real generation, prefer statically confirmed call edges from the target project whenever possible.
+- evidence gap: runtime queue contents, broker state, and remote service payloads are not visible from local source alone.
 ```
 
 ## Example Mock Stage Pattern
 
 ```markdown
 # Mock Data Stages
+
+> generated_by: project-analyzer
+> verified_at: 2026-04-09 14:30 Asia/Shanghai
+> provenance: static code inspection + inferred mock values
+> coverage: STANDARD_SUBMIT and REWRITE_FIELDS end-to-end stage chains
+> evidence_gap: exact runtime-injected values depend on environment config and downstream services
 
 This example uses demo values shaped from code structure rather than production data.
 

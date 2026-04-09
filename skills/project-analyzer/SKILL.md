@@ -149,9 +149,39 @@ When the repository already has older analysis docs:
 - update file names, call chains, and responsibilities only where the code proves a change
 - prefer continuity of wording and diagram structure over inventing a new format
 
+### 3.5. Build A Coverage And Evidence Matrix Before Writing
+
+Before emitting any markdown files, build an internal coverage list for yourself.
+
+At minimum identify:
+
+- primary entrypoints
+- primary request types, modes, or dispatch branches
+- major call chains
+- major runtime dependencies
+- style references found in the target repository
+- evidence gaps that cannot be proven from static code
+
+For each item, know which output document will cover it.
+
+- if an important branch or type has no clear document destination, fix that before writing
+- if a fact depends on runtime-only configuration, keep it in the plan but mark it as inferred
+- if there are only a small number of major branches, do not allow one branch to absorb all detail while the others become footnotes
+
 ### 4. Build Four Output Documents
 
 Write the following files into the target project's `docs/` directory.
+
+Every generated markdown file should begin with a short metadata block immediately below the title.
+
+Include at least:
+
+- `generated_by`
+- `verified_at`
+- `provenance`
+- `coverage`
+
+Add `evidence_gap` when coverage is partial or some facts are inferred from file structure or config rather than directly proven in code.
 
 #### `project-overview.md`
 
@@ -360,6 +390,13 @@ Examples:
 
 - "Downstream aggregation targets are loaded dynamically from ZK, so this section is inferred from the static call path."
 - "This response shape is confirmed from the serializer, but the exact field values below are mock examples."
+
+Prefer explicit labels such as:
+
+- `unknown: no direct evidence shows ...`
+- `evidence gap: runtime configuration or external service details are not present in this repository`
+
+Do not hide uncertainty inside vague prose.
 
 ## Output Template Guidance
 
